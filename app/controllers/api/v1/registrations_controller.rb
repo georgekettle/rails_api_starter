@@ -6,9 +6,7 @@ module Api
         
         if user.save
           # Create session for the new user
-          token = Session.generate_unique_secure_token
           session = user.sessions.create!(
-            token_digest: Session.digest(token),
             user_agent: request.user_agent,
             ip_address: request.remote_ip,
             last_seen_at: Time.current
@@ -17,7 +15,7 @@ module Api
           render_success(
             data: {
               user: user.as_json(only: [:id, :email, :name]),
-              token: token
+              token: session.token
             },
             status: :created
           )

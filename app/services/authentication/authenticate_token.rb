@@ -24,12 +24,9 @@ module Authentication
     private
 
     def find_active_session
-      # Use indexed scope for better performance
-      Session.active.includes(:user).find_each do |session|
-        return session if Session.valid_token?(token, session.token_digest)
-      end
-
-      raise AuthenticationError, 'Invalid or expired token'
+      session = Session.active.includes(:user).find_by(token: token)
+      raise AuthenticationError, 'Invalid or expired token' unless session
+      session
     end
 
     def validate_session!(session)

@@ -9,14 +9,8 @@ module Api
         user = User.find_by(email: params[:email]&.downcase)
 
         if user
-          token = PasswordResetToken.generate_unique_secure_token
-          user.password_reset_tokens.create!(
-            token_digest: PasswordResetToken.digest(token),
-            expires_at: 1.hour.from_now
-          )
-
-          # Send password reset email
-          UserMailer.password_reset(user, token).deliver_now
+          reset_token = user.password_reset_tokens.create!
+          UserMailer.password_reset(user, reset_token.token).deliver_now
         end
 
         # Return the same message regardless of whether user exists to prevent email enumeration
@@ -40,9 +34,7 @@ module Api
           )
         end
 
-        reset_token = PasswordResetToken.unused.find_each do |t|
-          break t if PasswordResetToken.valid_token?(token, t.token_digest)
-        end
+        reset_token = PasswordResetToken.unused.find_by(token: token)
 
         if reset_token&.valid_for_reset?
           user = reset_token.user

@@ -1,8 +1,8 @@
 class PasswordResetToken < ApplicationRecord
   belongs_to :user
+  has_secure_token
 
   # Validations
-  validates :token_digest, presence: true, uniqueness: true
   validates :expires_at, presence: true
 
   # Scopes
@@ -12,21 +12,6 @@ class PasswordResetToken < ApplicationRecord
 
   # Callbacks
   before_validation :set_default_expiry, on: :create
-
-  # Class methods
-  def self.generate_unique_secure_token
-    SecureRandom.base58(24)
-  end
-
-  def self.digest(token)
-    BCrypt::Password.create(token)
-  end
-
-  def self.valid_token?(token, digest)
-    BCrypt::Password.new(digest).is_password?(token)
-  rescue BCrypt::Errors::InvalidHash
-    false
-  end
 
   # Instance methods
   def valid_for_reset?

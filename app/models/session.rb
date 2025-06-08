@@ -1,15 +1,14 @@
 class Session < ApplicationRecord
   belongs_to :user
+  has_secure_token
 
   # Constants
-  TOKEN_LENGTH = 32
   DEFAULT_EXPIRY = 30.days
   ROTATION_THRESHOLD = 7.days
   INACTIVE_THRESHOLD = 24.hours
   CLEANUP_PROBABILITY = 0.1 # 10% chance of cleanup on each request
 
   # Validations
-  validates :token_digest, presence: true, uniqueness: true
   validates :last_seen_at, presence: true
   validates :expires_at, presence: true
 
@@ -28,28 +27,10 @@ class Session < ApplicationRecord
   before_validation :set_last_seen_at, on: :create
 
   # Class methods
-  def self.generate_unique_secure_token
-    SecureRandom.urlsafe_base64(TOKEN_LENGTH)
-  end
-
-  def self.digest(token)
-    BCrypt::Password.create(token, cost: bcrypt_cost)
-  end
-
-  def self.valid_token?(token, digest)
-    BCrypt::Password.new(digest).is_password?(token)
-  rescue BCrypt::Errors::InvalidHash
-    false
-  end
-
   def self.cleanup_expired
     transaction do
       expired.or(stale).find_each(&:invalidate!)
     end
-  end
-
-  def self.bcrypt_cost
-    Rails.env.test? ? BCrypt::Engine::MIN_COST : BCrypt::Engine::DEFAULT_COST
   end
 
   def self.should_cleanup?
@@ -79,23 +60,6 @@ class Session < ApplicationRecord
 
   def invalidate!
     update_column(:active, false)
-  end
-
-  def rotate!
-    return false unless active?
-
-    transaction do
-      invalidate!
-      new_token = self.class.generate_unique_secure_token
-      new_session = user.sessions.create!(
-        token_digest: self.class.digest(new_token),
-        user_agent: user_agent,
-        ip_address: ip_address,
-        last_seen_at: Time.current
-      )
-      
-      { token: new_token, session: new_session }
-    end
   end
 
   private

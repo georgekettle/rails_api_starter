@@ -22,9 +22,9 @@ module Authentication
       raise ValidationError, errors unless valid?
       
       user = find_and_authenticate_user
-      token = create_session_for_user(user)
+      session = create_session_for_user(user)
       
-      { user: user, token: token }
+      { user: user, token: session.token }
     end
 
     private
@@ -41,16 +41,11 @@ module Authentication
     end
 
     def create_session_for_user(user)
-      token = Session.generate_unique_secure_token
-      
       user.sessions.create!(
-        token_digest: Session.digest(token),
         user_agent: request_info[:user_agent],
         ip_address: request_info[:ip_address],
         last_seen_at: Time.current
       )
-
-      token
     end
 
     def log_failed_attempt
