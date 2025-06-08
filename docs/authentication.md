@@ -1,19 +1,3 @@
----
-description: 
-globs: 
-alwaysApply: false
----
----
-name: Token-Based Authentication (Rails 8 Generator)
-type: auto_attached
-glob: "**/*_controller.rb"
-description: >
-  Enforces token-based authentication in Rails 8 API-only apps using
-  database-backed session tokens. Tracks the current user and session
-  using the thread-safe `Current` pattern. Integrates with Rails'
-  secure password hashing and session storage via the database.
----
-
 # Authentication API Documentation
 
 This document outlines the authentication endpoints available in the API. All endpoints are prefixed with `/api/v1`.
