@@ -1,0 +1,164 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+---
+name: API Response Convention (Supabase-like)
+type: always
+description: Defines the standard JSON response structure for all API endpoints, including success, error, and paginated responses, mimicking a Supabase-like format.
+---
+
+# API Response Convention (Supabase-like)
+
+You are building a **Rails 8 API-only** application. All API responses **must** strictly follow a Supabase-style JSON structure. This convention applies to all controllers and actions.
+
+## ✅ Success Response (200 OK or 201 Created)
+
+When an API request is successful (e.g., `200 OK`, `201 Created`), the response **must** include a `data` key containing the payload and `error` as `null`.
+
+```json
+{
+  "data": { /* your payload object or array */ },
+  "error": null
+}
+Examples:
+
+GET /api/v1/users/1
+JSON
+{
+  "data": {
+    "id": 1,
+    "name": "Jane Doe",
+    "email": "jane@example.com"
+  },
+  "error": null
+}
+POST /api/v1/users
+JSON
+{
+  "data": {
+    "id": 2,
+    "name": "John Smith",
+    "email": "john@example.com"
+  },
+  "error": null
+}
+❌ Error Response (4xx or 5xx status codes)
+When an API request results in an error (e.g., 400 Bad Request, 401 Unauthorized, 404 Not Found, 422 Unprocessable Entity, 500 Internal Server Error), the response must include data as null and an error object.
+
+The error object must contain:
+
+message: A short, human-readable explanation of the error.
+code: A snake_case_code representing the error type (e.g., not_found, validation_failed, unauthorized, internal_server_error).
+details: An optional object providing more context, such as validation errors.
+JSON
+{
+  "data": null,
+  "error": {
+    "message": "Short human-readable explanation",
+    "code": "snake_case_code",
+    "details": { /* optional, more context */ }
+  }
+}
+Examples:
+
+GET /api/v1/users/999
+JSON
+{
+  "data": null,
+  "error": {
+    "message": "User not found",
+    "code": "not_found"
+  }
+}
+POST /api/v1/users (with invalid params)
+JSON
+{
+  "data": null,
+  "error": {
+    "message": "Validation failed",
+    "code": "validation_error",
+    "details": {
+      "email": ["can't be blank", "is invalid"]
+    }
+  }
+}
+📄 Pagination Response (GET with list endpoint)
+If an endpoint returns a list of resources and supports pagination, the response must include a pagination key alongside data and error. This pagination object should contain total, per_page, current_page, next_page, and prev_page fields.
+
+JSON
+{
+  "data": [
+    { "id": 1, "title": "Post A" },
+    { "id": 2, "title": "Post B" }
+  ],
+  "error": null,
+  "pagination": {
+    "total": 25,
+    "per_page": 10,
+    "current_page": 1,
+    "next_page": 2,
+    "prev_page": null
+  }
+}
+Implementation Guidance (API Response Concern)
+To enforce this structure, you must use an ApiResponse concern. This concern should be included in Api::V1::BaseController and expose render_success and render_error helper methods.
+
+File: app/controllers/concerns/api_response.rb
+
+Ruby
+# app/controllers/concerns/api_response.rb
+module ApiResponse
+  extend ActiveSupport::Concern
+
+  included do
+    # Ensure this concern is included in controllers that inherit from Api::V1::BaseController
+  end
+
+  # Renders a successful API response
+  # @param data [Object] The payload to return.
+  # @param status [Symbol] The HTTP status code (e.g., :ok, :created).
+  # @param pagination [Hash, nil] Optional hash for pagination details.
+  def render_success(data:, status: :ok, pagination: nil)
+    response = { data: data, error: nil }
+    response[:pagination] = pagination if pagination.present?
+    render json: response, status: status
+  end
+
+  # Renders an error API response
+  # @param message [String] A human-readable error message.
+  # @param code [String] A snake_case error code.
+  # @param status [Symbol] The HTTP status code (e.g., :bad_request, :unauthorized, :not_found).
+  # @param details [Hash, nil] Optional hash for more error context (e.g., validation errors).
+  def render_error(message:, code:, status: :bad_request, details: nil)
+    render json: {
+      data: nil,
+      error: {
+        message: message,
+        code: code,
+        details: details
+      }.compact # compact removes nil values from the hash
+    }, status: status
+  end
+end
+File: app/controllers/api/v1/base_controller.rb
+
+Ruby
+# app/controllers/api/v1/base_controller.rb
+module Api
+  module V1
+    class BaseController < ApplicationController
+      include ApiResponse
+      # Other base controller configurations (e.g., authentication, exception handling)
+      # will go here.
+    end
+  end
+end
+Important Directives for the AI:
+
+Always use render_success or render_error from the ApiResponse concern for all API responses.
+Never directly render json: without wrapping it in the data and error structure.
+Ensure HTTP status codes align precisely with the response meaning (e.g., 200/201 for success, 4xx/5xx for errors).
+For paginated lists, always include the pagination key following the specified structure.
+Error codes should be descriptive snake_case.

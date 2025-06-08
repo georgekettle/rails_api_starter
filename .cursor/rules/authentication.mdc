@@ -1,0 +1,105 @@
+---
+description: 
+globs: app/controllers/**/*.rb,db/**/*
+alwaysApply: false
+---
+---
+name: Token-Based Authentication (Rails 8 Generator)
+type: auto_attached
+glob: "**/*_controller.rb"
+description: >
+  Enforces token-based authentication in Rails 8 API-only apps using
+  database-backed session tokens. Tracks the current user and session
+  using the thread-safe `Current` pattern. Integrates with Rails'
+  secure password hashing and session storage via the database.
+---
+
+authentication:
+  pattern: token-based
+  current_user_accessor: Current.user
+  current_session_accessor: Current.session
+  session_token_location: Authorization header
+  token_format: "Token <session_token>"
+  token_digest_algorithm: bcrypt
+  session_management: database
+  login_requirements:
+    - token must exist in the `sessions` table
+    - token must be valid (not expired or revoked)
+    - token digest must match
+  token_expiration_policy: optional
+  user_agent_tracking: true
+  ip_tracking: true
+  touch_last_seen: true
+
+models:
+  user:
+    table: users
+    fields:
+      - email: string, required, unique
+      - password_digest: string, required
+      - name: string, optional
+      - timestamps: true
+    authentication: has_secure_password
+
+  session:
+    table: sessions
+    fields:
+      - user_id: references users, required
+      - token_digest: string, required, unique
+      - last_seen_at: datetime, optional
+      - user_agent: string, optional
+      - ip_address: string, optional
+      - timestamps: true
+    belongs_to: user
+    digest_strategy: bcrypt
+
+  password_reset_token:
+    table: password_reset_tokens
+    fields:
+      - token_digest: string, required, unique
+      - user_id: references users, required
+      - expires_at: datetime, required
+      - timestamps: true
+    belongs_to: user
+    digest_strategy: bcrypt
+    expiration_policy: required
+
+controllers:
+  auth_guard:
+    applies_to: all
+    before_action: authenticate_user!
+    method:
+      name: authenticate_user!
+      logic: |
+        Extract token from Authorization header in "Token <token>" format.
+        Find matching session by token digest.
+        Verify token using secure comparison (e.g., bcrypt).
+        Set Current.session and Current.user.
+        Optionally update last_seen_at.
+
+helpers:
+  current:
+    provides: 
+      - Current.user
+      - Current.session
+
+notes: >
+  This configuration is intended for stateless API clients. Session tokens
+  are stored hashed (digest) for security. Never store raw tokens. Token
+  revocation and rotation strategies can be added via session deletion and 
+  expiration handling.
+
+Routes:
+    # config/routes.rb
+    namespace :auth do
+        post   "signup",    to: "registrations#create"  # Register a new user
+        post   "login",     to: "sessions#create"       # Login, returns token
+        delete "logout",    to: "sessions#destroy"      # Logout, revoke session
+        get    "me",        to: "sessions#show"         # Get current user info
+    end
+
+    namespace :passwords do
+        post "forgot", to: "resets#create"              # Request password reset
+        post "reset",  to: "resets#update"              # Reset password using token
+    end
+
