@@ -4,7 +4,6 @@ class Session < ApplicationRecord
 
   # Constants
   DEFAULT_EXPIRY = 30.days
-  ROTATION_THRESHOLD = 7.days
   INACTIVE_THRESHOLD = 24.hours
   CLEANUP_PROBABILITY = 0.1 # 10% chance of cleanup on each request
 
@@ -20,7 +19,6 @@ class Session < ApplicationRecord
   scope :expired, -> { where('expires_at <= ?', Time.current) }
   scope :inactive, -> { where(active: false) }
   scope :stale, -> { where('last_seen_at < ?', INACTIVE_THRESHOLD.ago) }
-  scope :needs_rotation, -> { active.where('created_at < ?', ROTATION_THRESHOLD.ago) }
 
   # Callbacks
   before_validation :set_default_expiry, on: :create
@@ -44,10 +42,6 @@ class Session < ApplicationRecord
 
   def active?
     active && !expired?
-  end
-
-  def needs_rotation?
-    created_at < ROTATION_THRESHOLD.ago
   end
 
   def stale?
