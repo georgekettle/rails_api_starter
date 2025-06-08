@@ -17,20 +17,14 @@ module Api
 
           # Send password reset email
           UserMailer.password_reset(user, token).deliver_now
-
-          render_success(
-            data: {
-              message: "If an account exists with that email, you will receive password reset instructions."
-            }
-          )
-        else
-          # Return the same message even when user is not found to prevent email enumeration
-          render_success(
-            data: {
-              message: "If an account exists with that email, you will receive password reset instructions."
-            }
-          )
         end
+
+        # Return the same message regardless of whether user exists to prevent email enumeration
+        render_success(
+          data: {
+            message: "If an account exists with that email, you will receive password reset instructions."
+          }
+        )
       end
 
       # POST /api/v1/password/reset
