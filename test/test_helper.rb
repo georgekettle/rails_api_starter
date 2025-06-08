@@ -11,5 +11,25 @@ module ActiveSupport
     fixtures :all
 
     # Add more helper methods to be used by all tests here...
+    
+    # Authentication test helpers
+    def auth_headers(user = nil)
+      return {} unless user
+      
+      # Generate a unique token for each test
+      token = Session.generate_unique_secure_token
+      user.sessions.create!(
+        token_digest: Session.digest(token),
+        user_agent: 'Rails Testing',
+        ip_address: '127.0.0.1',
+        last_seen_at: Time.current
+      )
+      
+      { 'Authorization' => "Token #{token}" }
+    end
+
+    def json_response
+      JSON.parse(response.body)
+    end
   end
 end
