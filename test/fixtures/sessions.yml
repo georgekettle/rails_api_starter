@@ -1,0 +1,17 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+# We don't need any fixtures for sessions since we create them in the tests using auth_headers helper
+
+one:
+  user: one
+  token_digest: MyString
+  last_seen_at: 2025-06-08 18:36:25
+  user_agent: MyString
+  ip_address: MyString
+
+two:
+  user: two
+  token_digest: MyString
+  last_seen_at: 2025-06-08 18:36:25
+  user_agent: MyString
+  ip_address: MyString

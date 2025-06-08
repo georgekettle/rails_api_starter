@@ -1,7 +1,7 @@
 ---
 description: 
-globs: app/controllers/**/*.rb,db/**/*
-alwaysApply: false
+globs: 
+alwaysApply: true
 ---
 ---
 name: Token-Based Authentication (Rails 8 Generator)
