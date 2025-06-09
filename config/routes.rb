@@ -14,6 +14,8 @@ Rails.application.routes.draw do
       # Authentication routes
       post 'signup', to: 'registrations#create'
       delete 'user', to: 'registrations#destroy'
+      patch 'user', to: 'users#update'
+      put 'user', to: 'users#update'
       post 'login', to: 'sessions#create'
       delete 'logout', to: 'sessions#destroy'
       get 'me', to: 'sessions#show'

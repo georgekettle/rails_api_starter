@@ -1,33 +1,34 @@
 # Authentication API Documentation
 
-This document outlines the authentication endpoints available in the API. All endpoints are prefixed with `/api/v1`.
+## Base URL
+All endpoints use the base URL: `/api/v1/`
 
-## Authentication Flow
-
-The API uses token-based authentication. After successful login or signup, you'll receive a session token that should be included in subsequent requests in the `Authorization` header using the format: `Token <your_token>`.
-
-## Endpoints
-
-### Sign Up
-Creates a new user account and returns a session token.
-
-```http
-POST /signup
+## Authentication
+Most endpoints require authentication via the `Authorization` header:
+```
+Authorization: Token <session_token>
 ```
 
-**Request Body:**
+---
+
+## User Registration
+
+### POST `/api/v1/signup`
+Register a new user account.
+
+**Request:**
 ```json
 {
   "user": {
     "email": "user@example.com",
     "password": "password123",
     "password_confirmation": "password123",
-    "name": "John Doe"  // optional
+    "name": "John Doe"
   }
 }
 ```
 
-**Success Response (201 Created):**
+**Success Response (201):**
 ```json
 {
   "data": {
@@ -36,13 +37,13 @@ POST /signup
       "email": "user@example.com",
       "name": "John Doe"
     },
-    "token": "your_session_token"
+    "token": "generated_session_token"
   },
   "error": null
 }
 ```
 
-**Error Response (422 Unprocessable Entity):**
+**Error Response (422):**
 ```json
 {
   "data": null,
@@ -51,20 +52,20 @@ POST /signup
     "code": "validation_error",
     "details": {
       "email": ["has already been taken"],
-      "password": ["is too short (minimum is 8 characters)"]
+      "password": ["is too short"]
     }
   }
 }
 ```
 
-### Login
-Authenticates a user and returns a session token.
+---
 
-```http
-POST /login
-```
+## Session Management
 
-**Request Body:**
+### POST `/api/v1/login`
+Authenticate user and create session.
+
+**Request:**
 ```json
 {
   "email": "user@example.com",
@@ -72,7 +73,7 @@ POST /login
 }
 ```
 
-**Success Response (200 OK):**
+**Success Response (200):**
 ```json
 {
   "data": {
@@ -81,13 +82,13 @@ POST /login
       "email": "user@example.com",
       "name": "John Doe"
     },
-    "token": "your_session_token"
+    "token": "generated_session_token"
   },
   "error": null
 }
 ```
 
-**Error Response (401 Unauthorized):**
+**Error Response (401):**
 ```json
 {
   "data": null,
@@ -98,19 +99,10 @@ POST /login
 }
 ```
 
-### Get Current User
-Returns information about the currently authenticated user.
+### GET `/api/v1/me`
+Get current user information. **Requires authentication.**
 
-```http
-GET /me
-```
-
-**Headers:**
-```
-Authorization: Token your_session_token
-```
-
-**Success Response (200 OK):**
+**Success Response (200):**
 ```json
 {
   "data": {
@@ -120,38 +112,28 @@ Authorization: Token your_session_token
       "name": "John Doe"
     },
     "session": {
-      "last_seen_at": "2025-06-08T09:44:39.373Z",
-      "created_at": "2025-06-08T09:43:02.859Z"
+      "created_at": "2025-01-01T12:00:00Z"
     }
   },
   "error": null
 }
 ```
 
-**Error Response (401 Unauthorized):**
+**Error Response (401):**
 ```json
 {
   "data": null,
   "error": {
-    "message": "You need to sign in or sign up before continuing.",
+    "message": "Unauthorized access",
     "code": "unauthorized"
   }
 }
 ```
 
-### Logout
-Invalidates the current session token.
+### DELETE `/api/v1/logout`
+End current session. **Requires authentication.**
 
-```http
-DELETE /logout
-```
-
-**Headers:**
-```
-Authorization: Token your_session_token
-```
-
-**Success Response (200 OK):**
+**Success Response (200):**
 ```json
 {
   "data": {
@@ -161,32 +143,32 @@ Authorization: Token your_session_token
 }
 ```
 
-**Error Response (400 Bad Request):**
+**Error Response (400):**
 ```json
 {
   "data": null,
   "error": {
-    "message": "No active session found",
-    "code": "no_active_session"
+    "message": "No session found",
+    "code": "no_session"
   }
 }
 ```
 
-### Request Password Reset
-Initiates the password reset process by sending a reset link to the user's email.
+---
 
-```http
-POST /password/forgot
-```
+## Password Reset
 
-**Request Body:**
+### POST `/api/v1/password/forgot`
+Request password reset email.
+
+**Request:**
 ```json
 {
   "email": "user@example.com"
 }
 ```
 
-**Success Response (200 OK):**
+**Success Response (200):**
 ```json
 {
   "data": {
@@ -196,24 +178,20 @@ POST /password/forgot
 }
 ```
 
-Note: For security reasons, this endpoint returns the same response regardless of whether the email exists in the system.
+**Note:** This endpoint always returns the same message to prevent email enumeration attacks.
 
-### Reset Password
-Resets the user's password using a valid reset token.
+### POST `/api/v1/password/reset`
+Reset password using token from email.
 
-```http
-POST /password/reset
-```
-
-**Request Body:**
+**Request:**
 ```json
 {
-  "token": "reset_token_from_email",
+  "token": "password_reset_token",
   "password": "new_password123"
 }
 ```
 
-**Success Response (200 OK):**
+**Success Response (200):**
 ```json
 {
   "data": {
@@ -223,7 +201,7 @@ POST /password/reset
 }
 ```
 
-**Error Response (422 Unprocessable Entity):**
+**Error Response (422):**
 ```json
 {
   "data": null,
@@ -234,14 +212,191 @@ POST /password/reset
 }
 ```
 
+---
+
+## User Management
+
+### PATCH/PUT `/api/v1/user`
+Update user profile. **Requires authentication.**
+
+**Request:**
+```json
+{
+  "user": {
+    "email": "newemail@example.com",
+    "name": "New Name",
+    "password": "newpassword123",
+    "password_confirmation": "newpassword123"
+  }
+}
+```
+
+**Success Response (200):**
+```json
+{
+  "data": {
+    "user": {
+      "id": 1,
+      "email": "newemail@example.com",
+      "name": "New Name"
+    }
+  },
+  "error": null
+}
+```
+
+**Error Response (422):**
+```json
+{
+  "data": null,
+  "error": {
+    "message": "Validation failed",
+    "code": "validation_error",
+    "details": {
+      "email": ["has already been taken"]
+    }
+  }
+}
+```
+
+### DELETE `/api/v1/user`
+Delete user account. **Requires authentication.**
+
+**Success Response (200):**
+```json
+{
+  "data": {
+    "message": "Account deleted successfully"
+  },
+  "error": null
+}
+```
+
+**Error Response (422):**
+```json
+{
+  "data": null,
+  "error": {
+    "message": "Failed to delete account",
+    "code": "deletion_failed"
+  }
+}
+```
+
+---
+
+## Success Response Format
+
+All endpoints use consistent success format:
+
+```json
+{
+  "data": {
+    // Response payload - can be an object or array
+  },
+  "error": null,
+  "pagination": { // Optional, only included for paginated list endpoints
+    "total": 100,
+    "per_page": 20,
+    "current_page": 1,
+    "next_page": 2,
+    "prev_page": null
+  }
+}
+```
+
+### Common Success Response Examples
+
+**Single Resource:**
+```json
+{
+  "data": {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john@example.com"
+  },
+  "error": null
+}
+```
+
+**Resource List (with pagination):**
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "John Doe",
+      "email": "john@example.com"
+    },
+    {
+      "id": 2,
+      "name": "Jane Smith",
+      "email": "jane@example.com"
+    }
+  ],
+  "error": null,
+  "pagination": {
+    "total": 50,
+    "per_page": 20,
+    "current_page": 1,
+    "next_page": 2,
+    "prev_page": null
+  }
+}
+```
+
+**Simple Success Message:**
+```json
+{
+  "data": {
+    "message": "Operation completed successfully"
+  },
+  "error": null
+}
+```
+
+## Error Response Format
+
+All endpoints use consistent error format:
+
+```json
+{
+  "data": null,
+  "error": {
+    "message": "Human-readable error message",
+    "code": "snake_case_error_code",
+    "details": {} // Optional additional details for validation errors
+  }
+}
+```
+
+### Common Error Codes
+
+| Code | Description |
+|------|-------------|
+| `validation_error` | Input validation failed |
+| `invalid_credentials` | Login failed due to wrong email/password |
+| `invalid_token` | Password reset token is invalid or expired |
+| `unauthorized` | Authentication required but not provided |
+| `deletion_failed` | Account deletion failed |
+| `no_session` | No active session found for logout |
+
+---
+
 ## Security Features
 
-- Session tokens are securely hashed using BCrypt before storage
-- Password reset tokens expire after 1 hour
-- Sessions track user agent and IP address to prevent session hijacking
-- Passwords are validated for minimum length (8 characters)
-- Email addresses are stored and compared case-insensitively
-- All sensitive parameters are filtered from logs
-- Tokens are automatically invalidated on logout
-- Sessions can be invalidated server-side
-- Protection against email enumeration attacks 
+- **Token-based Authentication:** Uses session tokens for API access
+- **Email Enumeration Protection:** Password reset always returns same message
+- **Session Security:** IP address and user agent validation
+- **Content-Type Validation:** Only accepts JSON requests
+- **Automatic Token Cleanup:** Expired sessions are automatically removed
+
+---
+
+## Authentication Flow
+
+1. **Registration:** User signs up and receives a session token
+2. **Login:** User authenticates and receives a session token
+3. **API Access:** Include token in `Authorization` header for protected endpoints
+4. **Token Validation:** Server validates token, IP address, and user agent
+5. **Logout:** Token is invalidated and session destroyed

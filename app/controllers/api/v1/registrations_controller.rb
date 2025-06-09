@@ -1,7 +1,8 @@
 module Api
   module V1
     class RegistrationsController < BaseController
-      before_action :authenticate, only: [:destroy]
+      include Authenticate
+      skip_before_action :authenticate_user!, only: [:create]
       
       def create
         user = User.new(user_params)
@@ -33,8 +34,9 @@ module Api
       def destroy
         if Current.user.destroy
           render_success(
-            message: 'Account deleted successfully',
-            status: :ok
+            data: {
+              message: 'Account deleted successfully'
+            }
           )
         else
           render_error(
