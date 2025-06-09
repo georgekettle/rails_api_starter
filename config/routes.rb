@@ -13,6 +13,7 @@ Rails.application.routes.draw do
     namespace :v1 do
       # Authentication routes
       post 'signup', to: 'registrations#create'
+      delete 'user', to: 'registrations#destroy'
       post 'login', to: 'sessions#create'
       delete 'logout', to: 'sessions#destroy'
       get 'me', to: 'sessions#show'

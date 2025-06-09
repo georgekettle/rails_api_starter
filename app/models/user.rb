@@ -14,11 +14,6 @@ class User < ApplicationRecord
   # Callbacks
   before_save :downcase_email
 
-  # Instance methods
-  def invalidate_all_sessions!
-    sessions.update_all(active: false)
-  end
-
   private
 
   def downcase_email

@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_06_08_083631) do
+ActiveRecord::Schema[8.0].define(version: 2025_06_09_034244) do
   create_table "password_reset_tokens", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "token", null: false
@@ -27,17 +27,15 @@ ActiveRecord::Schema[8.0].define(version: 2025_06_08_083631) do
   create_table "sessions", force: :cascade do |t|
     t.integer "user_id", null: false
     t.string "token", null: false
-    t.datetime "last_seen_at", null: false
     t.string "user_agent"
     t.string "ip_address"
     t.datetime "expires_at"
-    t.boolean "active", default: true, null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["expires_at"], name: "index_sessions_on_expires_at"
     t.index ["token"], name: "index_sessions_on_token", unique: true
-    t.index ["user_id", "active"], name: "index_sessions_on_user_id_and_active"
     t.index ["user_id"], name: "index_sessions_on_user_id"
+    t.index ["user_id"], name: "index_sessions_on_user_id_and_active"
   end
 
   create_table "users", force: :cascade do |t|

@@ -13,11 +13,6 @@ class Current < ActiveSupport::CurrentAttributes
     user.present?
   end
 
-  # Helper method to check if we have an active session
-  def self.active_session?
-    session&.active?
-  end
-
   # Helper method to get client info
   def client_info
     {

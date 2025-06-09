@@ -30,12 +30,12 @@ module Api
       # Logout
       def destroy
         if current_session
-          current_session.update!(active: false)
+          current_session.destroy
           render_success(data: { message: 'Successfully logged out' })
         else
           render_error(
-            message: 'No active session found',
-            code: 'no_active_session',
+            message: 'No session found',
+            code: 'no_session',
             status: :bad_request
           )
         end
@@ -46,7 +46,7 @@ module Api
         render_success(
           data: {
             user: current_user.as_json(only: [:id, :email, :name]),
-            session: current_session.as_json(only: [:last_seen_at, :created_at])
+            session: current_session.as_json(only: [:created_at])
           }
         )
       end

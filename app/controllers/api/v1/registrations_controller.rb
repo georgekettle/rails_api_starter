@@ -1,6 +1,8 @@
 module Api
   module V1
     class RegistrationsController < BaseController
+      before_action :authenticate, only: [:destroy]
+      
       def create
         user = User.new(user_params)
         
@@ -8,8 +10,7 @@ module Api
           # Create session for the new user
           session = user.sessions.create!(
             user_agent: request.user_agent,
-            ip_address: request.remote_ip,
-            last_seen_at: Time.current
+            ip_address: request.remote_ip
           )
           
           render_success(
@@ -25,6 +26,21 @@ module Api
             code: 'validation_error',
             status: :unprocessable_entity,
             details: user.errors.as_json
+          )
+        end
+      end
+      
+      def destroy
+        if Current.user.destroy
+          render_success(
+            message: 'Account deleted successfully',
+            status: :ok
+          )
+        else
+          render_error(
+            message: 'Failed to delete account',
+            code: 'deletion_failed',
+            status: :unprocessable_entity
           )
         end
       end

@@ -21,8 +21,7 @@ module ActiveSupport
       user.sessions.create!(
         token_digest: Session.digest(token),
         user_agent: 'Rails Testing',
-        ip_address: '127.0.0.1',
-        last_seen_at: Time.current
+        ip_address: '127.0.0.1'
       )
       
       { 'Authorization' => "Token #{token}" }

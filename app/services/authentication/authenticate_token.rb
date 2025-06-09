@@ -14,24 +14,23 @@ module Authentication
     def call
       raise AuthenticationError, 'No token provided' if token.blank?
       
-      session = find_active_session
+      session = find_valid_session
       validate_session!(session)
-      update_session_tracking(session)
       
       { user: session.user, session: session }
     end
 
     private
 
-    def find_active_session
-      session = Session.active.includes(:user).find_by(token: token)
+    def find_valid_session
+      session = Session.not_expired.includes(:user).find_by(token: token)
       raise AuthenticationError, 'Invalid or expired token' unless session
       session
     end
 
     def validate_session!(session)
       if session_security_mismatch?(session)
-        session.update!(active: false)
+        session.destroy
         log_security_mismatch(session)
         raise AuthenticationError, 'Session invalidated due to security mismatch'
       end
@@ -44,10 +43,6 @@ module Authentication
       # This helps prevent token theft and session hijacking
       session.ip_address != request_info[:ip_address] ||
         session.user_agent != request_info[:user_agent]
-    end
-
-    def update_session_tracking(session)
-      session.touch_last_seen!
     end
 
     def log_security_mismatch(session)

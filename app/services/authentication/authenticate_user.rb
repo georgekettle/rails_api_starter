@@ -43,8 +43,7 @@ module Authentication
     def create_session_for_user(user)
       user.sessions.create!(
         user_agent: request_info[:user_agent],
-        ip_address: request_info[:ip_address],
-        last_seen_at: Time.current
+        ip_address: request_info[:ip_address]
       )
     end
 
