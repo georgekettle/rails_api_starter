@@ -336,6 +336,7 @@ DEPENDENCIES
   bootsnap
   brakeman
   debug
+  dotenv
   kamal
   letter_opener
   puma (>= 5.0)
