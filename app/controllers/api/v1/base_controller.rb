@@ -2,6 +2,7 @@ module Api
   module V1
     class BaseController < ApplicationController
       include ApiResponse
+      include Authenticate
       
       # Ensure JSON is returned for all API requests
       before_action :ensure_json_request

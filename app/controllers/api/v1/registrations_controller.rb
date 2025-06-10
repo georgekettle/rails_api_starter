@@ -1,7 +1,6 @@
 module Api
   module V1
     class RegistrationsController < BaseController
-      include Authenticate
       skip_before_action :authenticate_user!, only: [:create]
       
       def create

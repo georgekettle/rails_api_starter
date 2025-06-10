@@ -1,16 +1,13 @@
 module Api
   module V1
     class UsersController < BaseController
-      before_action :authenticate
-      
       def update
         if Current.user.update(user_params)
           render_success(
             data: {
-              user: Current.user.as_json(only: [:id, :email, :name])
-            },
-            message: 'User updated successfully',
-            status: :ok
+              user: Current.user.as_json(only: [:id, :email, :name]),
+              message: 'User updated successfully',
+            }
           )
         else
           render_error(
