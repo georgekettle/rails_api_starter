@@ -31,6 +31,22 @@ module Api
       end
       
       def destroy
+        unless params[:password].present?
+          return render_error(
+            message: 'Password is required to delete account',
+            code: 'password_required',
+            status: :unprocessable_entity
+          )
+        end
+
+        unless Current.user.authenticate(params[:password])
+          return render_error(
+            message: 'Invalid password',
+            code: 'invalid_password',
+            status: :unauthorized
+          )
+        end
+
         if Current.user.destroy
           render_success(
             data: {

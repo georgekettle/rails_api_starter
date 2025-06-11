@@ -23,6 +23,14 @@ Rails.application.routes.draw do
       # Password reset routes
       post 'password/forgot', to: 'password_resets#create'
       post 'password/reset', to: 'password_resets#update'
+      
+      # User email update
+      patch 'user/email', to: 'users#update_email'
+      put 'user/email', to: 'users#update_email'
+      
+      # User password update
+      patch 'user/password', to: 'users#update_password'
+      put 'user/password', to: 'users#update_password'
     end
   end
 end
